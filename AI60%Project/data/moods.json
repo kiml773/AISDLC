@@ -1,0 +1,23 @@
+[
+  {
+    "id": "1731b8b1-a307-440c-ba01-01cc5d85de6a",
+    "mood_score": 5,
+    "note": "fantastic\r\n",
+    "tags": [],
+    "timestamp": "2026-04-30T17:50:37.958497+00:00"
+  },
+  {
+    "id": "792d16ac-1950-418e-b138-8c2e1884e8de",
+    "mood_score": 2,
+    "note": "awful",
+    "tags": [],
+    "timestamp": "2026-04-30T17:50:45.785858+00:00"
+  },
+  {
+    "id": "7271e90f-7575-42b0-8de3-f6ecf2ac8553",
+    "mood_score": 5,
+    "note": "great",
+    "tags": [],
+    "timestamp": "2026-04-30T17:51:01.335011+00:00"
+  }
+]

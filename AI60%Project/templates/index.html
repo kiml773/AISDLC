@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mood Journal</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; padding: 1.5rem; }
+    h1 { font-size: 1.6rem; margin-bottom: 1.2rem; }
+    h2 { font-size: 1.1rem; margin-bottom: 0.8rem; color: #444; }
+    .card { background: #fff; border-radius: 8px; padding: 1.2rem; margin-bottom: 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; }
+    input[type=number], input[type=text], textarea {
+      width: 100%; padding: .5rem .7rem; border: 1px solid #ccc; border-radius: 5px;
+      font-size: .95rem; margin-bottom: .8rem;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    .btn { display: inline-block; padding: .45rem .9rem; border: none; border-radius: 5px; cursor: pointer; font-size: .9rem; }
+    .btn-primary { background: #4f46e5; color: #fff; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-danger  { background: #dc2626; color: #fff; }
+    .btn-danger:hover  { background: #b91c1c; }
+    .btn-secondary { background: #e5e7eb; color: #222; }
+    .btn-secondary:hover { background: #d1d5db; }
+    .btn-sm { padding: .3rem .6rem; font-size: .8rem; }
+    .error { background: #fee2e2; border: 1px solid #f87171; color: #991b1b; padding: .6rem 1rem; border-radius: 5px; margin-bottom: 1rem; }
+    .entry { border-left: 4px solid #4f46e5; padding: .8rem 1rem; margin-bottom: .8rem; background: #fafafa; border-radius: 0 6px 6px 0; }
+    .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
+    .score { font-size: 1.4rem; font-weight: 700; color: #4f46e5; }
+    .note { font-size: .9rem; color: #555; margin: .3rem 0; }
+    .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
+    .tag { background: #e0e7ff; color: #3730a3; border-radius: 99px; padding: .15rem .55rem; font-size: .78rem; text-decoration: none; }
+    .tag:hover { background: #c7d2fe; }
+    .ts { font-size: .75rem; color: #999; }
+    .actions { display: flex; gap: .4rem; }
+    .filters { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: .6rem; }
+    .filter-label { font-size: .85rem; color: #666; }
+    .nav { display: flex; gap: .8rem; margin-bottom: 1.5rem; }
+    .nav a { color: #4f46e5; text-decoration: none; font-size: .95rem; }
+    .nav a:hover { text-decoration: underline; }
+    .emoji-score { margin-right: .3rem; }
+  </style>
+</head>
+<body>
+  <h1>Mood Journal</h1>
+  <nav class="nav">
+    <a href="/">All Entries</a>
+    <a href="/chart">Weekly Chart</a>
+  </nav>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Log a Mood</h2>
+    <form method="POST" action="/mood">
+      <label for="mood_score">Mood Score (1–5)</label>
+      <input type="number" id="mood_score" name="mood_score" min="1" max="5" required placeholder="e.g. 4">
+
+      <label for="note">Note (optional)</label>
+      <textarea id="note" name="note" placeholder="How are you feeling?"></textarea>
+
+      <label for="tags">Tags (comma-separated)</label>
+      <input type="text" id="tags" name="tags" placeholder="e.g. work, exercise, sleep">
+
+      <button type="submit" class="btn btn-primary">Save Entry</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Entries {% if active_tag %}— filtered by "{{ active_tag }}"{% endif %}</h2>
+
+    {% if all_tags %}
+    <div class="filters">
+      <span class="filter-label">Filter by tag:</span>
+      <a href="/" class="tag {% if not active_tag %}btn-primary{% endif %}" style="{% if not active_tag %}background:#4f46e5;color:#fff{% endif %}">all</a>
+      {% for t in all_tags %}
+      <a href="/?tag={{ t }}" class="tag" style="{% if active_tag == t %}background:#4f46e5;color:#fff{% endif %}">{{ t }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if entries %}
+      {% for e in entries %}
+      <div class="entry">
+        <div class="entry-header">
+          <span class="score">
+            {% set stars = e.mood_score %}
+            {% if stars == 1 %}😞{% elif stars == 2 %}😕{% elif stars == 3 %}😐{% elif stars == 4 %}🙂{% else %}😄{% endif %}
+            {{ e.mood_score }}/5
+          </span>
+          <div class="actions">
+            <a href="/mood/{{ e.id }}/edit" class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="/mood/{{ e.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this entry?')">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </div>
+        </div>
+        {% if e.note %}
+        <p class="note">{{ e.note }}</p>
+        {% endif %}
+        <div class="tags">
+          {% for t in e.tags %}
+          <a href="/?tag={{ t }}" class="tag">{{ t }}</a>
+          {% endfor %}
+        </div>
+        <p class="ts">{{ e.timestamp[:16].replace("T", " ") }} UTC</p>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:#999;font-size:.9rem;">No entries yet{% if active_tag %} for tag "{{ active_tag }}"{% endif %}.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

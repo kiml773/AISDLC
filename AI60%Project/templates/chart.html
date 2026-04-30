@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly Mood Chart</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; padding: 1.5rem; }
+    h1 { font-size: 1.6rem; margin-bottom: 1.2rem; }
+    .nav { display: flex; gap: .8rem; margin-bottom: 1.5rem; }
+    .nav a { color: #4f46e5; text-decoration: none; font-size: .95rem; }
+    .nav a:hover { text-decoration: underline; }
+    .card { background: #fff; border-radius: 8px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); max-width: 700px; }
+    h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #444; }
+    .chart-container { position: relative; height: 320px; }
+    .note { font-size: .8rem; color: #888; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Mood Journal</h1>
+  <nav class="nav">
+    <a href="/">All Entries</a>
+    <a href="/chart">Weekly Chart</a>
+  </nav>
+
+  <div class="card">
+    <h2>Weekly Mood Trend (rolling 7 days)</h2>
+    <div class="chart-container">
+      <canvas id="trendChart"></canvas>
+    </div>
+    <p class="note">Average mood score (1–5) per day of the week for the past 7 days. Days with no entries show 0.</p>
+  </div>
+
+  <script>
+    const trend = {{ trend_json | safe }};
+    const labels = Object.keys(trend);
+    const data   = Object.values(trend);
+
+    const ctx = document.getElementById("trendChart").getContext("2d");
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Average Mood Score",
+          data: data,
+          backgroundColor: data.map(v =>
+            v === 0 ? "#e5e7eb" :
+            v < 2   ? "#fca5a5" :
+            v < 3   ? "#fcd34d" :
+            v < 4   ? "#86efac" : "#6ee7b7"
+          ),
+          borderColor: "#4f46e5",
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            min: 0,
+            max: 5,
+            ticks: { stepSize: 1 },
+            title: { display: true, text: "Mood Score" }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.parsed.y === 0
+                ? "No entries"
+                : `Avg: ${ctx.parsed.y.toFixed(2)}`
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
